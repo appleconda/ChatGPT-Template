@@ -7,44 +7,39 @@ import { getServerSideConfig } from "./config/server";
 
 const serverConfig = getServerSideConfig();
 
-export default async function App() {
-  // Update the state initialization to match Keycloak's type
+export default function App() {
   const [keycloak, setKeycloak] = useState<Keycloak | null>(null);
   const [authenticated, setAuthenticated] = useState(false);
+  const [isKeycloakInitialized, setIsKeycloakInitialized] = useState(false);
 
   useEffect(() => {
-    const keycloakInstance = new Keycloak({
-      url: "http://localhost:8080/auth/", // Replace with your Keycloak server URL
-      realm: "RealmTest", // Replace with your Keycloak realm
-      clientId: "client_gpt", // Replace with your Keycloak client ID
-    });
-
-    keycloakInstance
-      .init({ onLoad: "login-required" })
-      .then((authenticated) => {
-        setKeycloak(keycloakInstance); // No type error should occur here
-        setAuthenticated(authenticated);
-      })
-      .catch((error) => {
-        console.error("Keycloak init error:", error);
+    async function initializeKeycloak() {
+      const keycloakInstance = new Keycloak({
+        url: "http://localhost:8080/auth/", // Replace with your Keycloak server URL
+        realm: "RealmTest", // Replace with your Keycloak realm
+        clientId: "client_gpt", // Replace with your Keycloak client ID
       });
+
+      try {
+        const authenticated = await keycloakInstance.init({
+          onLoad: "login-required",
+        });
+        setKeycloak(keycloakInstance);
+        setAuthenticated(authenticated);
+      } catch (error) {
+        console.error("Keycloak init error:", error);
+      } finally {
+        setIsKeycloakInitialized(true);
+      }
+    }
+
+    initializeKeycloak();
   }, []);
 
-  console.log("authenticated: ", authenticated);
-  if (keycloak) {
-    if (authenticated)
-      return <Home />; // Render Home component after successful authentication
-    else return <div>Unable to authenticate!</div>;
+  if (keycloak && authenticated) {
+    console.log("Authenticated");
+    return <Home />;
+  } else {
+    return <div>Unable to authenticate!</div>;
   }
-  //  return <div>Initializing Keycloak</div>
-  return (
-    <>
-      <Home />
-      {serverConfig?.isVercel && (
-        <>
-          <Analytics />
-        </>
-      )}
-    </>
-  );
 }
