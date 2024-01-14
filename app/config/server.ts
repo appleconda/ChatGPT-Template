@@ -30,6 +30,11 @@ declare global {
       // google only
       GOOGLE_API_KEY?: string;
       GOOGLE_URL?: string;
+
+      // Keycloak
+      KEYCLOAK_URL?: string;
+      KEYCLOAK_REALM?: string;
+      KEYCLOAK_CLIENT_ID?: string;
     }
   }
 }
@@ -75,6 +80,8 @@ export const getServerSideConfig = () => {
     `[Server Config] using ${randomIndex + 1} of ${apiKeys.length} api key`,
   );
 
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+
   return {
     baseUrl: process.env.BASE_URL,
     apiKey,
@@ -101,5 +108,9 @@ export const getServerSideConfig = () => {
     hideBalanceQuery: !process.env.ENABLE_BALANCE_QUERY,
     disableFastLink: !!process.env.DISABLE_FAST_LINK,
     customModels,
+
+    keycloakUrl: process.env.KEYCLOAK_URL,
+    keycloakRealm: process.env.KEYCLOAK_REALM,
+    keycloakClientId: process.env.KEYCLOAK_CLIENT_ID,
   };
 };

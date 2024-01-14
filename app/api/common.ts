@@ -112,7 +112,7 @@ export async function requestOpenai(req: NextRequest) {
       console.error("[OpenAI] gpt4 filter", e);
     }
   }
-
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   try {
     const res = await fetch(fetchUrl, fetchOptions);
 

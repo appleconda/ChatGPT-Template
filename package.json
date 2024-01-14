@@ -23,6 +23,7 @@
     "emoji-picker-react": "^4.5.15",
     "fuse.js": "^7.0.0",
     "html-to-image": "^1.11.11",
+    "keycloak-js": "^23.0.4",
     "mermaid": "^10.6.1",
     "nanoid": "^5.0.3",
     "next": "^13.4.9",
