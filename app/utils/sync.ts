@@ -163,3 +163,56 @@ export function mergeWithUpdate<T extends { lastUpdateTime?: number }>(
     return { ...localState };
   }
 }
+
+export async function loadDataFromRemote() {
+  const username = useAccessStore.getState().userName;
+  const url = `/api/db/${username}`;
+
+  let result;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { "content-type": "application/json" },
+    });
+
+    result = await response.json();
+    if (result.status === 404) {
+      console.log("user not found");
+      return false;
+    } else result.status === 200;
+    {
+      const remoteState = result.body as AppState;
+      const localState = getLocalAppState();
+      mergeAppState(localState, remoteState);
+      setLocalAppState(localState);
+      return true;
+    }
+  } catch (error) {
+    console.error("Error during API call:", error);
+  }
+}
+
+export async function saveDataToRemote(localState: any) {
+  const response = await fetch("/api/db/", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(localState),
+  });
+
+  if (!response.ok) {
+    console.error("Error during API call:", response.status);
+  }
+}
+
+export async function test(token: any) {
+  const response = await fetch("/api/db/", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(token),
+  });
+  console.log(response.status);
+}

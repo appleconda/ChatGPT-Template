@@ -30,6 +30,7 @@ import {
   showConfirm,
   showToast,
 } from "./ui-lib";
+
 import { ModelConfigList } from "./model-config";
 
 import { IconButton } from "./button";
@@ -71,6 +72,10 @@ import { useSyncStore } from "../store/sync";
 import { nanoid } from "nanoid";
 import { useMaskStore } from "../store/mask";
 import { ProviderType } from "../utils/cloud";
+import { useKeycloak } from "./home";
+import Keycloak from "keycloak-js";
+import { getLocalAppState } from "../utils/sync";
+import { json } from "stream/consumers";
 
 function EditPromptModal(props: { id: string; onClose: () => void }) {
   const promptStore = usePromptStore();
@@ -226,9 +231,77 @@ function UserPromptModal(props: { onClose?: () => void }) {
   );
 }
 
+async function sendDataAndLogout(
+  parsedObject: any,
+  keycloak: Keycloak | null,
+  username: string,
+): Promise<void> {
+  try {
+    const checkUrl = `/api/db/doesUserExist/${username}`;
+    const putUrl = `/api/db/${username}`;
+
+    console.log(`Checking if the ${username} exists`);
+
+    const userExistsResponse = await fetch(checkUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!userExistsResponse.ok) {
+      throw new Error(`HTTP error! status: ${userExistsResponse.status}`);
+    }
+
+    const userData = await userExistsResponse.json();
+    console.log("Response to /api/db/doesUserExist/ Success:", userData);
+
+    if (userData.body.Exists === true) {
+      console.log("Calling PUT Method");
+      const dataResponse = await fetch(putUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(parsedObject),
+      });
+
+      const resy = await dataResponse.json();
+    } else {
+      // Create new user
+      const createUrl = "/api/db/"; // Assuming this is the endpoint for creating a new user
+      console.log("Making POST request to /api/db/ ");
+      const dataResponse = await fetch(createUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(parsedObject),
+      });
+      const data = await dataResponse.json();
+      console.log("User update/create success:", data);
+    }
+  } catch (error) {
+    console.error("Error in sendDataAndLogout:", error);
+  } finally {
+    console.log("Attempting to log out");
+    if (keycloak) {
+      try {
+        await keycloak.logout();
+        //Additional logout handling logic here
+      } catch (logoutError) {
+        console.error("Logout error:", logoutError);
+      }
+    }
+  }
+}
+
 function DangerItems() {
   const chatStore = useChatStore();
   const appConfig = useAppConfig();
+  const localState = JSON.stringify(getLocalAppState());
+  const parsedObject = JSON.parse(localState);
+  const keycloak = useKeycloak();
 
   return (
     <List>
@@ -258,6 +331,22 @@ function DangerItems() {
             }
           }}
           type="danger"
+        />
+      </ListItem>
+      <ListItem title="Logout" subTitle="Click to logout from the application">
+        <IconButton
+          text="Logout"
+          onClick={async () => {
+            if (await showConfirm("Are you sure you want to logout?")) {
+              sendDataAndLogout(
+                parsedObject,
+                keycloak,
+                useAccessStore.getState().userName,
+              );
+            }
+          }}
+          type="danger"
+          // icon={<YourLogoutIcon />} // Optional: Add an icon if you have one
         />
       </ListItem>
     </List>
@@ -1149,7 +1238,6 @@ export function Settings() {
               )}
             </ListItem>
           ) : null}
-
           <ListItem
             title={Locale.Settings.Access.CustomModel.Title}
             subTitle={Locale.Settings.Access.CustomModel.SubTitle}

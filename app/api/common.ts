@@ -66,11 +66,15 @@ export async function requestOpenai(req: NextRequest) {
   }
 
   const fetchUrl = `${baseUrl}/${path}`;
+
+  const username = req.headers.get("X-User-Name");
+
   const fetchOptions: RequestInit = {
     headers: {
       "Content-Type": "application/json",
       "Cache-Control": "no-store",
       [authHeaderName]: authValue,
+      ...(username && { "X-User-Name": username }),
       ...(serverConfig.openaiOrgId && {
         "OpenAI-Organization": serverConfig.openaiOrgId,
       }),

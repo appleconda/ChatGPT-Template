@@ -267,6 +267,39 @@ export const useChatStore = createPersistStore(
         get().summarizeSession();
       },
 
+      async updateDb() {
+        const messageSecLast =
+          get().currentSession().messages[
+            get().currentSession().messages.length - 2
+          ];
+        const messageLast =
+          get().currentSession().messages[
+            get().currentSession().messages.length - 1
+          ];
+        const sessionId = get().currentSession().id;
+        console.log("Update Db function called");
+
+        console.log(
+          `messageSecLast: ${messageSecLast}, messageLast: ${messageLast}, sessionId: ${sessionId}`,
+        );
+
+        const result = await fetch(`/api/db/putmsg/${sessionId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messageSecLast),
+        });
+
+        const result2 = await fetch(`/api/db/putmsg/${sessionId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(messageLast),
+        });
+      },
+
       async onUserInput(content: string) {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
@@ -302,6 +335,8 @@ export const useChatStore = createPersistStore(
           ]);
         });
 
+        //get().currentSession().messages[get().currentSession().messages.length - 1];
+
         var api: ClientApi;
         if (modelConfig.model === "gemini-pro") {
           api = new ClientApi(ModelProvider.GeminiPro);
@@ -329,6 +364,7 @@ export const useChatStore = createPersistStore(
               get().onNewMessage(botMessage);
             }
             ChatControllerPool.remove(session.id, botMessage.id);
+            get().updateDb();
           },
           onError(error) {
             const isAborted = error.message.includes("aborted");

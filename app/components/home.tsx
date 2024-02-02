@@ -17,6 +17,21 @@ import { ErrorBoundary } from "./error";
 
 import { getISOLang, getLang } from "../locales";
 
+import Keycloak from "keycloak-js";
+
+import { createContext, useContext } from "react";
+
+import {
+  getLocalAppState,
+  loadDataFromRemote,
+  saveDataToRemote,
+  test,
+} from "../utils/sync";
+
+const KeycloakContext = createContext<Keycloak | null>(null);
+
+export const useKeycloak = () => useContext(KeycloakContext);
+
 import {
   HashRouter as Router,
   Routes,
@@ -29,6 +44,7 @@ import { AuthPage } from "./auth";
 import { getClientConfig } from "../config/client";
 import { ClientApi } from "../client/api";
 import { useAccessStore } from "../store";
+import { json } from "stream/consumers";
 
 export function Loading(props: { noLogo?: boolean }) {
   return (
@@ -186,24 +202,77 @@ export function useLoadData() {
 }
 
 export function Home() {
+  const [keycloak, setKeycloak] = useState<Keycloak | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+
   useSwitchTheme();
   useLoadData();
   useHtmlLang();
 
   useEffect(() => {
     console.log("[Config] got config from build time", getClientConfig());
+
+    const initializeKeycloak = async () => {
+      const keycloakInstance = new Keycloak({
+        url: "https://ai.eunomatix.com:4116/auth/",
+        realm: "RealmTest",
+        clientId: "client_gpt",
+      });
+
+      try {
+        const authenticated = await keycloakInstance.init({
+          onLoad: "login-required",
+        });
+        if (authenticated) {
+          setKeycloak(keycloakInstance);
+          const userName = keycloakInstance.idTokenParsed?.preferred_username;
+          setUserName(userName);
+          useAccessStore.getState().setUserName(userName);
+        }
+      } catch (error) {
+        console.error("Keycloak init error:", error);
+      }
+    };
+
+    initializeKeycloak();
     useAccessStore.getState().fetch();
   }, []);
 
-  if (!useHasHydrated()) {
-    return <Loading />;
+  useEffect(() => {
+    if (userName) {
+      const fetchData = async () => {
+        try {
+          const didLoad = await loadDataFromRemote();
+
+          if (!didLoad) {
+            const localState = JSON.stringify(getLocalAppState());
+            const localStateAsJson = JSON.parse(localState);
+            saveDataToRemote(localStateAsJson);
+          }
+        } catch (error) {
+          console.error("An error occurred:", error);
+        }
+      };
+
+      // Call the async function
+      fetchData();
+    }
+  }, [userName]);
+
+  if (!useHasHydrated() || !keycloak) {
+    return <div>Loading...</div>;
   }
 
   return (
-    <ErrorBoundary>
-      <Router>
-        <Screen />
-      </Router>
-    </ErrorBoundary>
+    <KeycloakContext.Provider value={keycloak}>
+      <div>
+        <p>Welcome, {userName}</p>
+        <ErrorBoundary>
+          <Router>
+            <Screen />
+          </Router>
+        </ErrorBoundary>
+      </div>
+    </KeycloakContext.Provider>
   );
 }

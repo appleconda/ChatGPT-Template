@@ -41,6 +41,8 @@ const DEFAULT_ACCESS_STATE = {
   disableGPT4: false,
   disableFastLink: false,
   customModels: "",
+
+  userName: "",
 };
 
 export const useAccessStore = createPersistStore(
@@ -51,6 +53,14 @@ export const useAccessStore = createPersistStore(
       this.fetch();
 
       return get().needCode;
+    },
+
+    setUserName(newUserName: any) {
+      set(() => ({ userName: newUserName }));
+    },
+
+    getUserName() {
+      return get().userName;
     },
 
     isValidOpenAI() {
