@@ -182,6 +182,7 @@ export async function loadDataFromRemote() {
       return false;
     } else result.status === 200;
     {
+      console.log("User foung merging states");
       const remoteState = result.body as AppState;
       const localState = getLocalAppState();
       mergeAppState(localState, remoteState);

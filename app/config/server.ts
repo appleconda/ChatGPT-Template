@@ -35,6 +35,8 @@ declare global {
       KEYCLOAK_URL?: string;
       KEYCLOAK_REALM?: string;
       KEYCLOAK_CLIENT_ID?: string;
+
+      MONGODB_URI?: string;
     }
   }
 }
@@ -112,5 +114,7 @@ export const getServerSideConfig = () => {
     keycloakUrl: process.env.KEYCLOAK_URL,
     keycloakRealm: process.env.KEYCLOAK_REALM,
     keycloakClientId: process.env.KEYCLOAK_CLIENT_ID,
+
+    MongoUri: process.env.MONGODB_URI,
   };
 };

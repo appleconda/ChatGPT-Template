@@ -1,11 +1,13 @@
 import { MongoClient, MongoClientOptions } from "mongodb";
+import { getServerSideConfig } from "../config/server";
 
+const serverConfig = getServerSideConfig();
 // Define a type for the global variable to hold the MongoDB client promise
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-const uri = process.env.MONGODB_URI;
+const uri = serverConfig.MongoUri;
 
 if (!uri) {
   throw new Error(
