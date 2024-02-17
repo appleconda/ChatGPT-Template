@@ -39,12 +39,12 @@ export enum FileName {
 }
 
 export enum StoreKey {
-  Chat = "chat-next-web-store",
-  Access = "access-control",
-  Config = "app-config",
-  Mask = "mask-store",
-  Prompt = "prompt-store",
-  Update = "chat-update",
+  Chat = "chat_next_web_store",
+  Access = "access_control",
+  Config = "app_config",
+  Mask = "mask_store",
+  Prompt = "prompt_store",
+  Update = "chat_update",
   Sync = "sync",
 }
 
@@ -100,7 +100,7 @@ You are ChatGPT, a large language model trained by OpenAI.
 Knowledge cutoff: {{cutoff}}
 Current model: {{model}}
 Current time: {{time}}
-Latex inline: $x^2$ 
+Latex inline: $x^2$
 Latex block: $$e=mc^2$$
 `;
 

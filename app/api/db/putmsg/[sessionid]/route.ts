@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import clientPromise from "../../../mongodb";
+import { createApolloClient } from "@/app/utils/apolloClient";
+import { APPEND_MSG } from "@/app/graphql/queries";
 
 interface Message {
   id: string;
@@ -10,64 +11,38 @@ interface Message {
   model?: string;
 }
 
-async function appendMessageToSession(
+async function handler(
   req: NextRequest,
   { params }: { params: { sessionid: string } },
 ) {
-  console.log(`[DB] putmsg/db/${params.sessionid} called`);
-  if (!req.body) {
-    return NextResponse.json({
-      status: 400,
-      body: { error: "Request body is missing" },
-    });
+  console.log("/api/db/appendmsg/ called");
+  const req_body = await req.json();
+  console.log("message to put ", req_body);
+  if (!req_body) {
+    return new NextResponse("Bad Request", { status: 400 });
   }
 
-  const message: Message = await req.json(); // Assuming the message object is sent in the request body
+  const message: Message = req_body;
   const sessionId = params.sessionid;
-  console.log(sessionId);
+  console.log("Message ", message);
+  console.log("session id", sessionId);
 
-  if (!sessionId) {
-    return NextResponse.json({
-      status: 400,
-      body: { error: "Session ID is missing" },
-    });
-  }
-
-  const client = await clientPromise;
-  const db = client.db("chatapp");
+  const client = createApolloClient();
 
   try {
-    // Using MongoDB's $push operator to append the message to the specific session's messages array
-    const updateResult = await db
-      .collection("store")
-      .updateOne(
-        { "chat-next-web-store.sessions.id": sessionId },
-        { $push: { "chat-next-web-store.sessions.$.messages": message } },
-      );
-
-    // Check if the session was found and updated
-    if (updateResult.matchedCount === 0) {
-      return NextResponse.json({
-        status: 404,
-        body: { error: "Session not found" },
-      });
+    const { data } = await client.mutate({
+      mutation: APPEND_MSG,
+      variables: { sessionId: sessionId, message: message },
+    });
+    console.log(data);
+    if (!data) {
+      return new NextResponse("Internal Server Error", { status: 500 });
     }
-
-    if (updateResult.modifiedCount === 0) {
-      return NextResponse.json({
-        status: 500,
-        body: { error: "Failed to append message to session" },
-      });
-    }
-
-    return NextResponse.json({ status: 200, body: { success: true } });
   } catch (error) {
-    console.error("Error appending message to session:", error);
-    throw error; // Or handle the error as per your application's error handling policy
-  } finally {
-    // Optional: close the client if you are not reusing it elsewhere
-    // await client.close();
+    console.error(error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
+  return new NextResponse("OK", { status: 200 });
 }
 
-export const PUT = appendMessageToSession;
+export const POST = handler;

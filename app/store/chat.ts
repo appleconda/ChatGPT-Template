@@ -283,16 +283,16 @@ export const useChatStore = createPersistStore(
           `messageSecLast: ${messageSecLast}, messageLast: ${messageLast}, sessionId: ${sessionId}`,
         );
 
-        const result = await fetch(`/api/db/putmsg/${sessionId}`, {
-          method: "PUT",
+        const result = await fetch(`/api/db/putMsg/${sessionId}`, {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(messageSecLast),
         });
 
-        const result2 = await fetch(`/api/db/putmsg/${sessionId}`, {
-          method: "PUT",
+        const result2 = await fetch(`/api/db/putMsg/${sessionId}`, {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },

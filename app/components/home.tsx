@@ -245,6 +245,7 @@ export function Home() {
           const didLoad = await loadDataFromRemote();
 
           if (!didLoad) {
+            console.log("No remote data found, saving local data to remote");
             const localState = JSON.stringify(getLocalAppState());
             const localStateAsJson = JSON.parse(localState);
             saveDataToRemote(localStateAsJson);
@@ -254,7 +255,6 @@ export function Home() {
         }
       };
 
-      // Call the async function
       fetchData();
     }
   }, [userName]);

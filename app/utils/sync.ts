@@ -136,10 +136,20 @@ export function setLocalAppState(appState: AppState) {
 
 export function mergeAppState(localState: AppState, remoteState: AppState) {
   Object.keys(localState).forEach(<T extends keyof AppState>(k: string) => {
+    console.log("mergeAppState", k);
     const key = k as T;
     const localStoreState = localState[key];
     const remoteStoreState = remoteState[key];
-    MergeStates[key](localStoreState, remoteStoreState);
+
+    // Check if states are defined before attempting to merge
+    if (
+      typeof localStoreState !== "undefined" &&
+      typeof remoteStoreState !== "undefined"
+    ) {
+      MergeStates[key](localStoreState, remoteStoreState);
+    } else {
+      console.warn(`Undefined state encountered for key: ${key}`);
+    }
   });
 
   return localState;
@@ -166,36 +176,34 @@ export function mergeWithUpdate<T extends { lastUpdateTime?: number }>(
 
 export async function loadDataFromRemote() {
   const username = useAccessStore.getState().userName;
-  const url = `/api/db/${username}`;
 
-  let result;
+  const response = await fetch(`/api/db/getUser/${username}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: { "content-type": "application/json" },
-    });
-
-    result = await response.json();
-    if (result.status === 404) {
-      console.log("user not found");
-      return false;
-    } else result.status === 200;
-    {
-      console.log("User foung merging states");
-      const remoteState = result.body as AppState;
-      const localState = getLocalAppState();
-      mergeAppState(localState, remoteState);
-      setLocalAppState(localState);
-      return true;
-    }
-  } catch (error) {
-    console.error("Error during API call:", error);
+  if (response.status === 404) {
+    console.log("User was not found in database");
+    return false;
   }
-}
 
+  // Directly use the parsed object from the response
+  const result = await response.json();
+  console.log("The result body", result); // 'result' is already a JavaScript object
+
+  // Assuming 'result' is the AppState object you want to merge
+  const localState = getLocalAppState();
+  const remoteState = result; // Use 'result' directly since it's already an object
+
+  const mergedState = mergeAppState(localState, remoteState);
+  setLocalAppState(mergedState);
+
+  return true;
+}
 export async function saveDataToRemote(localState: any) {
-  const response = await fetch("/api/db/", {
+  const response = await fetch("/api/db/putUser", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(localState),
