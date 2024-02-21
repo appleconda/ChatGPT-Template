@@ -141,6 +141,7 @@ export class ClientApi {
 
 export function getHeaders() {
   const accessStore = useAccessStore.getState();
+  const chatStore = useChatStore.getState();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     "x-requested-with": "XMLHttpRequest",
@@ -158,7 +159,7 @@ export function getHeaders() {
   const makeBearer = (s: string) => `${isAzure ? "" : "Bearer "}${s.trim()}`;
   const validString = (x: string) => x && x.length > 0;
 
-  const UserName = accessStore.userName;
+  const UserName = chatStore.userName;
   if (validString(UserName)) {
     headers["X-User-Name"] = UserName;
   }
