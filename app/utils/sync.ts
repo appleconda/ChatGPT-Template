@@ -8,6 +8,7 @@ import { useMaskStore } from "../store/mask";
 import { usePromptStore } from "../store/prompt";
 import { StoreKey } from "../constant";
 import { merge } from "./merge";
+import { removeFieldsWithKey } from "./removeFieldWithKey";
 
 type NonFunctionKeys<T> = {
   [K in keyof T]: T[K] extends (...args: any[]) => any ? never : K;
@@ -146,7 +147,8 @@ export function mergeAppState(localState: AppState, remoteState: AppState) {
       typeof localStoreState !== "undefined" &&
       typeof remoteStoreState !== "undefined"
     ) {
-      MergeStates[key](localStoreState, remoteStoreState);
+      if (key != "mask_store" && key != "prompt_store")
+        MergeStates[key](localStoreState, remoteStoreState);
     } else {
       console.warn(`Undefined state encountered for key: ${key}`);
     }
@@ -175,7 +177,7 @@ export function mergeWithUpdate<T extends { lastUpdateTime?: number }>(
 }
 
 export async function loadDataFromRemote() {
-  const username = useAccessStore.getState().userName;
+  const username = useChatStore.getState().userName;
 
   const response = await fetch(`/api/db/getUser/${username}`, {
     method: "GET",
@@ -196,6 +198,7 @@ export async function loadDataFromRemote() {
   // Assuming 'result' is the AppState object you want to merge
   const localState = getLocalAppState();
   const remoteState = result; // Use 'result' directly since it's already an object
+  removeFieldsWithKey(remoteState);
 
   const mergedState = mergeAppState(localState, remoteState);
   setLocalAppState(mergedState);

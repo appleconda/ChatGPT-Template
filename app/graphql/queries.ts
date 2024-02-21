@@ -49,6 +49,7 @@ export const GET_USER = gql`
         }
         currentSessionIndex
         lastUpdateTime
+        userName
       }
       access_control {
         accessCode
@@ -68,7 +69,6 @@ export const GET_USER = gql`
         disableGPT4
         disableFastLink
         customModels
-        userName
         lastUpdateTime
       }
       app_config {
@@ -159,5 +159,11 @@ export const PUT_USER = gql`
 export const APPEND_MSG = gql`
   mutation Mutation($sessionId: String!, $message: MessageInput!) {
     appendMessage(sessionID: $sessionId, message: $message)
+  }
+`;
+
+export const APPEND_SESS = gql`
+  mutation Mutation($userName: String!, $session: SessionInput!) {
+    appendSession(userName: $userName, session: $session)
   }
 `;

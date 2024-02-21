@@ -34,6 +34,7 @@ async function handler(
     return new NextResponse(JSON.stringify(data.user), { status: 200 });
   } catch (error) {
     console.error(error);
+    console.log("Error fetching user data from graphQL server", error);
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

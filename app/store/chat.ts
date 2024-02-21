@@ -120,6 +120,7 @@ function fillTemplateWith(input: string, modelConfig: ModelConfig) {
 const DEFAULT_CHAT_STATE = {
   sessions: [createEmptySession()],
   currentSessionIndex: 0,
+  userName: "",
 };
 
 export const useChatStore = createPersistStore(
@@ -138,6 +139,14 @@ export const useChatStore = createPersistStore(
           sessions: [createEmptySession()],
           currentSessionIndex: 0,
         }));
+      },
+
+      setUserName(newUserName: any) {
+        set(() => ({ userName: newUserName }));
+      },
+
+      getUserName() {
+        return get().userName;
       },
 
       selectSession(index: number) {
@@ -192,6 +201,21 @@ export const useChatStore = createPersistStore(
           currentSessionIndex: 0,
           sessions: [session].concat(state.sessions),
         }));
+
+        get().saveSession();
+      },
+
+      async saveSession() {
+        const { userName } = get();
+        const session = JSON.stringify(get().currentSession());
+        const url = `/api/db/putSession/${userName}`;
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: session,
+        });
       },
 
       nextSession(delta: number) {

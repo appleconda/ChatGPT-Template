@@ -14,12 +14,14 @@ import { getCSSVar, useMobileScreen } from "../utils";
 import dynamic from "next/dynamic";
 import { ModelProvider, Path, SlotID } from "../constant";
 import { ErrorBoundary } from "./error";
+import { removeFieldsWithKey } from "../utils/removeFieldWithKey";
 
 import { getISOLang, getLang } from "../locales";
 
 import Keycloak from "keycloak-js";
 
 import { createContext, useContext } from "react";
+import { useChatStore } from "../store";
 
 import {
   getLocalAppState,
@@ -204,6 +206,7 @@ export function useLoadData() {
 export function Home() {
   const [keycloak, setKeycloak] = useState<Keycloak | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const chatStore = useChatStore();
 
   useSwitchTheme();
   useLoadData();
@@ -227,7 +230,8 @@ export function Home() {
           setKeycloak(keycloakInstance);
           const userName = keycloakInstance.idTokenParsed?.preferred_username;
           setUserName(userName);
-          useAccessStore.getState().setUserName(userName);
+          // change to chat store
+          chatStore.setUserName(userName);
         }
       } catch (error) {
         console.error("Keycloak init error:", error);
@@ -249,6 +253,19 @@ export function Home() {
             const localState = JSON.stringify(getLocalAppState());
             const localStateAsJson = JSON.parse(localState);
             saveDataToRemote(localStateAsJson);
+          }
+          // save the current session to database if doesn't exist
+          else {
+            const session = JSON.stringify(chatStore.currentSession());
+            console.log("session ", session);
+            const url = `/api/db/putSession/${userName}`;
+            const response = await fetch(url, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: session,
+            });
           }
         } catch (error) {
           console.error("An error occurred:", error);
