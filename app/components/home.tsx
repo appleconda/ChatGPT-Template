@@ -214,10 +214,11 @@ export function Home() {
 
   useEffect(() => {
     console.log("[Config] got config from build time", getClientConfig());
+    console.log("keycloak url", process.env.KEYCLOAK_URL);
 
     const initializeKeycloak = async () => {
       const keycloakInstance = new Keycloak({
-        url: "https://ai.eunomatix.com:4116/auth/",
+        url: process.env.NEXT_PUBLIC_KEYCLOAK_URL,
         realm: "RealmTest",
         clientId: "client_gpt",
       });

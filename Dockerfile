@@ -17,7 +17,8 @@ RUN apk update && apk add --no-cache git
 ENV OPENAI_API_KEY=""
 ENV GOOGLE_API_KEY=""
 ENV CODE=""
-ENV MONGODB_URI=mongodb://dummy:dummy@dummyhost:27017/
+ENV APOLLO_URL=""
+ENV NEXT_PUBLIC_KEYCLOAK_URL=""
 
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -40,7 +41,8 @@ RUN apk update && apk add --no-cache git
 
 ENV OPENAI_API_KEY=""
 ENV GOOGLE_API_KEY=""
-ENV MONGODB_URI=mongodb://dummy:dummy@localhost:27017/
+ENV APOLLO_URL=""
+ENV NEXT_PUBLIC_KEYCLOAK_URL=""
 
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -57,7 +59,8 @@ ENV PROXY_URL=""
 ENV OPENAI_API_KEY=""
 ENV GOOGLE_API_KEY=""
 ENV CODE=""
-ENV MONGODB_URI=""
+ENV APOLLO_URL=""
+ENV NEXT_PUBLIC_KEYCLOAK_URL=""
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
